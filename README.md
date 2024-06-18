@@ -2,7 +2,7 @@
 
 This repository contains my dotfiles for configuring a macOS system and setting up a development environment.
 
-#### File overview:
+#### File overview
 
 ```sh
 .
@@ -14,7 +14,7 @@ This repository contains my dotfiles for configuring a macOS system and setting 
 └── config.sh     # Setup script for home directory
 ```
 
-## Home Setup Directory
+## Home Directory Setup
 
 **Warning:** Only run the script if you understand its effects, as it will overwrite your existing setup files.
 
