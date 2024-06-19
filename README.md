@@ -2,7 +2,7 @@
 
 This repository contains my dotfiles for configuring a macOS system and setting up a development environment.
 
-#### File overview
+#### File Overview
 
 ```sh
 .
