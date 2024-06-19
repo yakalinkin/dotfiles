@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOTFILES=(.gitconfig .gitignore)
+DOTFILES=(.gitconfig .gitignore .zshrc)
 
 echo ""
 echo "Copying dotfiles to home directory:"
