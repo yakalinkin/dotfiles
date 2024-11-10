@@ -1,9 +1,11 @@
 # Dotfiles
 
-This repository contains configuration files for a macOS development environment. The setup script (`config.sh`) copies the files to the home directory (`~/`) and sets up the following:
+This repository contains configuration files and a setup script for a macOS development environment, including Git and Zsh configurations.
 
-- [Git](https://git-scm.com/)
-- [Zsh](https://www.zsh.org/) with [Oh My Zsh](https://ohmyz.sh/)
+###### FEATURES
+- Custom `.gitconfig`
+- Enhanced Zsh setup with [Oh My Zsh](https://ohmyz.sh/)
+- Standardized `.editorconfig`
 
 #### File Overview
 
@@ -17,19 +19,16 @@ This repository contains configuration files for a macOS development environment
 └── config.sh     # Setup script for home directory
 ```
 
-## Home Directory Setup
-
-> **Warning**
-> Only run the script if you understand its effects, as it will overwrite your existing setup files.
+## Getting Started
 
 ###### REQUIREMENTS
-
-Ensure you have the following installed:
 - [Git](https://git-scm.com/)
-- [Zsh](https://www.zsh.org/)
 - [Oh My Zsh](https://ohmyz.sh/)
 
 ### Installation
+
+> **Warning**
+> Only run the script if you understand its effects, as it will overwrite your existing setup files.
 
 1. Clone the repository to your home directory:
     ```sh
