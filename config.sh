@@ -2,23 +2,38 @@
 
 DOTFILES=(.gitconfig .gitignore .zshrc)
 
-echo ""
-echo "Copying dotfiles to home directory:"
-echo ""
+RED='\033[0;31m'
+NC='\033[0m'
 
-for dotfile in "${DOTFILES[@]}"; do
-  cp -v ~/dotfiles/"$dotfile" ~/"$dotfile"
-done
+copy_dotfiles() {
+  echo ""
+  echo "Copying dotfiles to home directory..."
+  echo ""
 
-echo ""
-echo "Setting up git user.name and user.email:"
-echo ""
+  for dotfile in "${DOTFILES[@]}"; do
+    if [ -f "$PWD/$dotfile" ]; then
+      cp -v "$PWD/$dotfile" ~/"$dotfile"
+    else
+      echo -e "${RED}File \"$PWD/$dotfile\" does not exist.${NC}"
+    fi
+  done
+}
 
-read -p "Enter your git username: " git_username
-read -p "Enter your git email: " git_email
+setup_git() {
+  echo ""
 
-git config --global user.name "$git_username"
-git config --global user.email "$git_email"
+  read -p "Enter your git user.name: " git_username
+  git config --global user.name "$git_username"
 
-echo ""
-echo "Done!"
+  read -p "Enter your git user.email: " git_useremail
+  git config --global user.email "$git_useremail"
+}
+
+main() {
+  copy_dotfiles
+  setup_git
+  echo ""
+  echo "Done!"
+}
+
+main
