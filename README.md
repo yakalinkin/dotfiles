@@ -1,53 +1,34 @@
 # Dotfiles
 
-This repository contains configuration files and a setup script for a macOS development environment, including Git and Zsh configurations.
+Personal configs and helper scripts for setting up a macOS machine.
 
-###### FEATURES
-- Custom `.gitconfig`
-- Enhanced Zsh setup with [Oh My Zsh](https://ohmyz.sh/)
-- Standardized `.editorconfig`
+> [!WARNING]
+> Personal dotfiles. Use at your own risk.
 
-#### File Overview
+#### Repository structure
 
-```sh
+```text
 .
-├── .editorconfig # Editor configuration
-├── .gitconfig    # Git configuration
-├── .gitignore    # Git ignore rules
-├── .zshrc        # Zsh configuration
-│
-└── config.sh     # Setup script for home directory
+├── config.sh           # Installer
+├── dotfiles/           # Source dotfiles
+│   ├── .editorconfig
+│   ├── .gitconfig
+│   ├── .gitignore
+│   └── .zshrc
+└── bin/                # Helper scripts
+    └── cisco-vpn.sh    # Cisco VPN helper
 ```
 
-## Getting Started
+Clone to `~/dotfiles`, then run from your home folder:
 
-###### REQUIREMENTS
-- [Git](https://git-scm.com/)
-- [Oh My Zsh](https://ohmyz.sh/)
+```sh
+cd ~
+git clone <repo-url> ~/dotfiles
+cd ~/dotfiles
+./config.sh
+```
 
-### Installation
+Notes:
 
-> **Warning**
-> Only run the script if you understand its effects, as it will overwrite your existing setup files.
-
-1. Clone the repository to your home directory:
-    ```sh
-    git clone https://github.com/yakalinkin/dotfiles.git ~/dotfiles
-    ```
-
-2. Navigate to the `dotfiles` directory:
-    ```sh
-    cd ~/dotfiles
-    ```
-
-3. Make the `config.sh` script executable and run it:
-    ```sh
-    chmod +x ./config.sh && ./config.sh
-    ```
-
-4. Remove the `dotfiles` directory:
-    ```sh
-    rm -rf ~/dotfiles
-    ```
-
-All set! You can now customize the configuration files in your home directory (`~/`) as needed or add new ones.
+- Commands assume you run them from your home directory.
+- The installer expects the repo at `~/dotfiles`.

@@ -10,9 +10,8 @@ source $ZSH/oh-my-zsh.sh
 
 export EDITOR="nano"
 
-# ZSH-Autosuggestions
-# For more information, visit: https://github.com/zsh-users/zsh-autosuggestions
-# source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# bin/*
+export PATH="$HOME/bin:$PATH"
 
 # NVM (Node Version Manager)
 # For more information, visit: https://github.com/nvm-sh/nvm

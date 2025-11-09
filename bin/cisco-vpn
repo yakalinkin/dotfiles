@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+# This script manages VPN connections using Cisco Secure Client.
+#
+# Keychain Setup:
+# 1. Add a Keychain item for the VPN username:
+#    security add-generic-password -a cisco_vpn_user -s cisco_vpn_username -w <your_username>
+# 2. Add a Keychain item for the VPN host:
+#    security add-generic-password -a <your_username> -s cisco_vpn_host -w <vpn_host>
+# 3. Add a Keychain item for the VPN password:
+#    security add-generic-password -a <your_username> -s cisco_vpn -w <vpn_password>
+#
+# Ensure the script has permissions to access these Keychain items.
+
+set -euo pipefail
+IFS=$'\n\t'
+
+VPN_CMD="${CISCO_VPN_CMD:-}"
+if [ -z "$VPN_CMD" ]; then
+  VPN_CMD="$(command -v vpn || true)"
+  VPN_CMD="${VPN_CMD:-/opt/cisco/secureclient/bin/vpn}"
+fi
+VPN_CONFIRM=${VPN_CONFIRM:-y}
+
+RED='\033[0;31m'
+GRAY='\033[0;90m'
+WHITE='\033[0;37m'
+NC='\033[0m'
+
+err() { printf '%b\n' "${RED}$*${NC}" >&2; }
+
+log() { printf '%b\n' "${GRAY}$*${NC}"; }
+
+logw() { printf '%b\n' "${WHITE}$*${NC}"; }
+
+usage() {
+  cat <<EOF
+Usage:
+
+$(basename "$0") <command>
+
+Commands:
+
+connect    | -c    Connect (reads credentials from Keychain)
+disconnect | -d    Disconnect
+password   | -p    Update VPN password in Keychain for current user
+status     | -s    Show client status
+help       | -h    Show this message
+EOF
+}
+
+get_secret() {
+  # get_secret <account> <service>
+  security find-generic-password -a "$1" -s "$2" -w 2>/dev/null || return 1
+}
+
+require_vpn_cmd() {
+  if [[ -n "$VPN_CMD" && -x "$VPN_CMD" ]]; then
+    return 0
+  fi
+
+  if [[ -n "$VPN_CMD" ]]; then
+    if command -v "$VPN_CMD" >/dev/null 2>&1; then
+      VPN_CMD="$(command -v "$VPN_CMD")"
+      return 0
+    fi
+  fi
+
+  if command -v vpn >/dev/null 2>&1; then
+    VPN_CMD="$(command -v vpn)"
+    return 0
+  fi
+
+  err "VPN client not found or not executable: ${VPN_CMD:-<none>}"
+  exit 3
+}
+
+cleanup() {
+  unset USERNAME VPN_HOST PASSWORD MFA_CODE NEW_PASSWORD
+  if [[ -n "${SHELL_WAS_INTERACTIVE:-}" ]]; then
+    set -o history
+  fi
+}
+trap '[ -n "${CRED_FILE:-}" ] && rm -f "$CRED_FILE" >/dev/null 2>&1; cleanup' EXIT
+
+command_connect() {
+  local USERNAME VPN_HOST PASSWORD MFA_CODE MFA_CODE_RAW
+  if [[ $- == *i* ]]; then SHELL_WAS_INTERACTIVE=1; set +o history; fi
+  USERNAME=$(get_secret cisco_vpn_user cisco_vpn_username) || {
+    err "Failed to read username from Keychain (account=cisco_vpn_user, service=cisco_vpn_username)."
+    exit 2
+  }
+
+  VPN_HOST=$(get_secret "$USERNAME" cisco_vpn_host) || {
+    err "Failed to read VPN host for account '$USERNAME' (service=cisco_vpn_host)."
+    exit 2
+  }
+
+  PASSWORD=$(get_secret "$USERNAME" cisco_vpn) || {
+    err "Failed to read VPN password for account '$USERNAME' (service=cisco_vpn)."
+    exit 2
+  }
+
+  require_vpn_cmd
+
+  log "Connecting to $VPN_HOST as $USERNAME..."
+
+  read -r -s -p "Enter MFA code (6 digits): " MFA_CODE_RAW
+  printf '\n'
+
+  if [[ ! "$MFA_CODE_RAW" =~ ^[0-9]{6}$ ]]; then
+    err "Invalid MFA code. It must be exactly 6 digits."
+    exit 1
+  fi
+
+  MFA_CODE="$MFA_CODE_RAW"
+
+  "$VPN_CMD" -s <<EOF
+connect $VPN_HOST
+$USERNAME
+$PASSWORD
+$MFA_CODE
+$VPN_CONFIRM
+EOF
+
+  unset PASSWORD MFA_CODE MFA_CODE_RAW
+}
+
+command_disconnect() {
+  require_vpn_cmd
+  log "Disconnecting VPN..."
+  if "$VPN_CMD" disconnect; then
+    logw "Disconnected"
+  else
+    err "Failed to disconnect VPN"
+    return 1
+  fi
+}
+
+command_password() {
+  local USERNAME NEW_PASSWORD
+  if [[ $- == *i* ]]; then SHELL_WAS_INTERACTIVE=1; set +o history; fi
+
+  log "Updating VPN password in Keychain..."
+
+  USERNAME=$(get_secret cisco_vpn_user cisco_vpn_username) || {
+    err "Failed to read username from Keychain (account=cisco_vpn_user, service=cisco_vpn_username)."
+    exit 2
+  }
+
+  read -r -s -p "Enter new VPN password: " NEW_PASSWORD
+  printf '\n'
+
+  if [[ -z "$NEW_PASSWORD" ]]; then
+    err "Password cannot be empty."
+    exit 1
+  fi
+
+  if ! security add-generic-password -U -a "$USERNAME" -s cisco_vpn -w "$NEW_PASSWORD" 2>/dev/null; then
+    err "Failed to update password in Keychain for '$USERNAME'."
+    exit 1
+  fi
+
+  logw "Password updated in Keychain for $USERNAME"
+}
+
+command_status() {
+  require_vpn_cmd
+  log "Checking VPN status..."
+  "$VPN_CMD" status || err "Status command failed or not supported by this client."
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  connect|-c)
+    command_connect
+  ;;
+  disconnect|-d)
+    command_disconnect
+  ;;
+  password|-p)
+    command_password
+  ;;
+  status|-s)
+    command_status
+  ;;
+  help|-h)
+    usage
+    exit 0
+  ;;
+  "")
+    usage
+    exit 1
+  ;;
+  *)
+    err "Unknown command: $cmd"
+    usage
+    exit 2
+  ;;
+esac
